@@ -61,7 +61,8 @@ public class MotorControl extends OpMode {
                 motor.setPowerFactor(BUTTON_A_POWER_FACTOR); // Set to Position A
             } else if (gamepad1.b) {
                 motor.setPowerFactor(BUTTON_B_POWER_FACTOR); // Set to Position B
-            } else {
+            }
+            else {
                 motor.operate(ZERO_MOTOR_POWER);  // Stop motor if no button is pressed in target position mode
             }
         } else {

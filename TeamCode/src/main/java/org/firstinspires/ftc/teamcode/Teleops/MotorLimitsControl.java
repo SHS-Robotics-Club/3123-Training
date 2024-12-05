@@ -13,7 +13,10 @@ import org.firstinspires.ftc.teamcode.Components.MotorLimits;
 @TeleOp(name = "L02 - Motor Limits Control", group = "Training")
 public class MotorLimitsControl extends OpMode {
 
+    private static final double ZERO_MOTOR_POWER = 0.0;
+
     private MotorLimits motor;
+    private double power = 0.0;
     private boolean isManualMode; // Flag for manual mode
 
     /**
@@ -35,8 +38,8 @@ public class MotorLimitsControl extends OpMode {
         telemetry.addData("Motor Initialization", motor != null ? "Success" : "Failed");
         telemetry.addData("Motor Mode", isManualMode ? "Manual" : "Target Position");
         telemetry.addData("Joystick Power", gamepad1.left_stick_y); // Report joystick value
-        telemetry.addData("Motor Power", "Power = %.2f   |   Power Factor = %.2f",
-                motor.getPowerFactor(), motor.getPowerFactor() * gamepad1.left_stick_y); // Actual power applied
+        telemetry.addData("Motor", "Power = %.2f   |   Power Factor = %.2f",
+                motor.getPowerFactor() * -gamepad1.left_stick_y, motor.getPowerFactor()); // Actual power applied
         telemetry.update();
     }
 
@@ -46,30 +49,29 @@ public class MotorLimitsControl extends OpMode {
      */
     @Override
     public void loop() {
+
         // Get joystick input for manual mode
-        double joystickY = -gamepad1.left_stick_y;
+        power = -gamepad1.left_stick_y;
 
         // If joystick Y is near zero, switch to target position mode
-        if (Math.abs(joystickY) < 0.1) {
-            isManualMode = false; // Switch to target position mode
-
+        if (Math.abs(power) < 0.1) {
             // Check for button presses to set the target position
             if (gamepad1.a) {
+                isManualMode = false; // Switch to manual mode if joystick is being used
                 motor.setTargetPosition(MotorLimits.LOW_POSITION_LIMIT); // Set to Position A
-                motor.operate(motor.getPowerFactor()); // Apply power to move towards Position A
+//                motor.operate(1.0); // Apply power to move towards Position A
             } else if (gamepad1.b) {
+                isManualMode = false; // Switch to manual mode if joystick is being used
                 motor.setTargetPosition(MotorLimits.HIGH_POSITION_LIMIT); // Set to Position B
-                motor.operate(motor.getPowerFactor()); // Apply power to move towards Position B
-            } else {
-                motor.operate(0);  // Stop motor if no button is pressed in target position mode
+//                motor.operate(1.0); // Apply power to move towards Position B
             }
-
+            else {
+                motor.operate(ZERO_MOTOR_POWER);  // Stop motor if no button is pressed in target position mode
+            }
         } else {
-            // Joystick is being moved, switch to manual mode
             isManualMode = true; // Switch to manual mode if joystick is being used
-
             // Apply power based on joystick input
-            motor.operate(joystickY); // Apply power based on joystick input
+            motor.operate(power); // Apply power based on joystick input
         }
 
         // Report telemetry for debugging
