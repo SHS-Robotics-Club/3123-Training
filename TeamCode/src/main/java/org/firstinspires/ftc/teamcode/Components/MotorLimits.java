@@ -20,13 +20,14 @@ public class MotorLimits {
     public static final int LOW_POSITION_LIMIT = (int) (-10.0 * TICKS_PER_DEGREE);  // Position A
     public static final int HIGH_POSITION_LIMIT = (int) (90.0 * TICKS_PER_DEGREE);  // Position B
     public static final int INIT_POSITION = 0;  // Position B
-    public static final double LOW_POWER_FACTOR_LIMIT = 0.6;  // Low power factor
+    public static final double LOW_POWER_FACTOR_LIMIT = 0.25;  // Low power factor
     public static final double HIGH_POWER_FACTOR_LIMIT = 1.0; // High power factor
     public static final double MOTOR_POWER_ZERO = 0.0;  // Power to motors before START
     public static final long SAFETY_TIMEOUT_MS = 5000;  // Loop safety timeout
 
     private DcMotor m_tb; // The motor object for m_tb
-    private double powerFactor; // Current power factor (1.0 or 0.6)
+    private double powerFactor = (LOW_POWER_FACTOR_LIMIT + HIGH_POWER_FACTOR_LIMIT) / 2; // Current power factor (1.0 or 0.6)
+    private double adjustedPower;
     private Telemetry telemetry; // Telemetry object for reporting status
 
     /**
@@ -55,9 +56,10 @@ public class MotorLimits {
     public void init() {
         if (m_tb != null) {
             m_tb.setDirection(DcMotorSimple.Direction.FORWARD); // Set motor direction
-            m_tb.setPower(MOTOR_POWER_ZERO); // Set motor to zero power for safety
+//            m_tb.setPower(MOTOR_POWER_ZERO); // Set motor to zero power for safety
             m_tb.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE); // Motor should brake when power is zero
             m_tb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); // Reset encoder
+            m_tb.setMode(DcMotor.RunMode.RUN_USING_ENCODER); // Reset encoder
         } else {
             telemetry.addData("Error", "Motor is not initialized.");
             telemetry.update();
@@ -124,8 +126,8 @@ public class MotorLimits {
             telemetry.update();
         }
 
-        // Ensure the motor is stopped once it reaches the target position
-        m_tb.setPower(MOTOR_POWER_ZERO); // Set power to 0 to stop the motor
+        // Ensure the motor is back in the default mode
+        m_tb.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     /**
@@ -141,7 +143,7 @@ public class MotorLimits {
      * Reports motor telemetry, including position and power.
      */
     public void getTelemetry() {
-        telemetry.addData("Motor Limits", "Power: %.2f  |  Pos: %.2f  | Factor: %.2f",
+        telemetry.addData("Motor Limits", "Power: %.2f  |  Pos: %4d  | Factor: %.2f",
                 m_tb.getPower(), m_tb.getCurrentPosition(), powerFactor);
     }
 
@@ -151,6 +153,7 @@ public class MotorLimits {
      * @param power The power to apply to the motor.
      */
     public void operate(double power) {
-        m_tb.setPower(power * this.powerFactor);
+        adjustedPower = power * powerFactor;
+        m_tb.setPower(adjustedPower);
     }
 }
